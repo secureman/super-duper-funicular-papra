@@ -114,13 +114,17 @@ fun HomeScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
+                    Text(
+                        text = state.activeOrganization?.name ?: "Papra",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
+                actions = {
                     OrgSwitcher(
                         organizations = state.organizations,
                         active = state.activeOrganization,
                         onSelect = viewModel::switchOrganization,
                     )
-                },
-                actions = {
                     IconButton(onClick = onOpenSearch) {
                         Icon(Icons.Filled.Search, contentDescription = "Search")
                     }
