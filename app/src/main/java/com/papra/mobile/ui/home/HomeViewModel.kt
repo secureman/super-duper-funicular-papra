@@ -44,8 +44,16 @@ class HomeViewModel(
                 val savedOrgId = sessionStore.activeOrganizationId.first()
                 val active = orgs.firstOrNull { it.id == savedOrgId } ?: orgs.firstOrNull()
                 _uiState.value = _uiState.value.copy(organizations = orgs, activeOrganization = active)
-                if (active != null) loadDocuments(active.id) else {
-                    _uiState.value = _uiState.value.copy(isLoading = false)
+                if (active != null) {
+                    loadDocuments(active.id)
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = if (orgs.isEmpty()) {
+                            "No organizations found for this account. Check that sign-in " +
+                                "succeeded and the account has at least one organization."
+                        } else null,
+                    )
                 }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Failed to load organizations")
@@ -74,6 +82,24 @@ class HomeViewModel(
 
     fun refresh() {
         _uiState.value.activeOrganization?.let { loadDocuments(it.id, _uiState.value.searchQuery) }
+    }
+
+    /** Called after a file picker returns a resolved File + mimeType, or a camera capture completes. */
+    fun uploadFile(file: java.io.File, mimeType: String) {
+        val org = _uiState.value.activeOrganization
+        if (org == null) {
+            _uiState.value = _uiState.value.copy(error = "Select an organization first")
+            return
+        }
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                documentRepository.uploadDocument(org.id, file, mimeType)
+                loadDocuments(org.id, _uiState.value.searchQuery)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Upload failed")
+            }
+        }
     }
 
     private fun loadDocuments(organizationId: String, query: String = "") {

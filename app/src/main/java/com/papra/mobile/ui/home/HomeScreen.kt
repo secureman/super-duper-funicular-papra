@@ -1,5 +1,9 @@
 package com.papra.mobile.ui.home
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -37,11 +41,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import com.papra.mobile.data.remote.dto.DocumentDto
 import com.papra.mobile.ui.components.DocumentGridItem
 import com.papra.mobile.ui.components.DocumentListItem
 import com.papra.mobile.ui.components.OrgSwitcher
+import com.papra.mobile.util.createCameraCaptureFile
+import com.papra.mobile.util.resolveContentUriToFile
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,11 +57,58 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onOpenDocument: (DocumentDto) -> Unit,
     onOpenSearch: () -> Unit,
-    onUploadFile: () -> Unit,
-    onScanDocument: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
     var fabExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    // Holds the temp file the camera intent is asked to write into; needed
+    // because TakePicture() only returns success/failure, not the Uri.
+    var pendingCaptureFile by remember { mutableStateOf<java.io.File?>(null) }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            val resolved = resolveContentUriToFile(context, uri)
+            viewModel.uploadFile(resolved.file, resolved.mimeType)
+        }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+    ) { success ->
+        val file = pendingCaptureFile
+        if (success && file != null) {
+            viewModel.uploadFile(file, "image/jpeg")
+        }
+        pendingCaptureFile = null
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            val file = createCameraCaptureFile(context)
+            pendingCaptureFile = file
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            cameraLauncher.launch(uri)
+        }
+    }
+
+    fun launchScan() {
+        val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+            context, Manifest.permission.CAMERA,
+        ) == PackageManager.PERMISSION_GRANTED
+        if (hasPermission) {
+            val file = createCameraCaptureFile(context)
+            pendingCaptureFile = file
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            cameraLauncher.launch(uri)
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -92,12 +147,12 @@ fun HomeScreen(
                     DropdownMenuItem(
                         text = { Text("Upload file") },
                         leadingIcon = { Icon(Icons.Filled.CloudUpload, contentDescription = null) },
-                        onClick = { fabExpanded = false; onUploadFile() },
+                        onClick = { fabExpanded = false; filePickerLauncher.launch(arrayOf("*/*")) },
                     )
                     DropdownMenuItem(
                         text = { Text("Scan document") },
                         leadingIcon = { Icon(Icons.Filled.CameraAlt, contentDescription = null) },
-                        onClick = { fabExpanded = false; onScanDocument() },
+                        onClick = { fabExpanded = false; launchScan() },
                     )
                 }
             }

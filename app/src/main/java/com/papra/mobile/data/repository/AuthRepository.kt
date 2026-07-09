@@ -40,8 +40,15 @@ class AuthRepository(private val sessionStore: SessionStore) {
             if (!response.isSuccessful) {
                 return AuthResult.Error("Sign-in failed (${response.code()})")
             }
-            val cookie = response.headers()["set-cookie"]
-                ?: return AuthResult.Error("No session returned by server")
+            // Set-Cookie headers look like "name=value; Path=/; HttpOnly; SameSite=Lax".
+            // The request Cookie header must only contain "name=value" pairs -- replaying
+            // the full Set-Cookie string back gets silently rejected by the server, which
+            // breaks every authenticated call after login. Strip to just the pairs.
+            val setCookieHeaders = response.headers().values("set-cookie")
+            if (setCookieHeaders.isEmpty()) {
+                return AuthResult.Error("No session returned by server")
+            }
+            val cookie = setCookieHeaders.joinToString("; ") { it.substringBefore(";").trim() }
             sessionStore.saveEmailSession(cookie)
             AuthResult.Success
         } catch (e: Exception) {

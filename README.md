@@ -51,6 +51,29 @@ this is *your* fork, diff these paths/fields against your actual server
 routes (particularly if you've renamed fields or changed the folder model)
 before wiring up the picker/camera flows above.
 
+## CI: building via GitHub Actions
+
+`.github/workflows/android-debug-build.yml` builds an unsigned debug APK on
+every push/PR and on manual trigger, no local Android Studio needed:
+
+1. Push this project to a GitHub repo (or your Papra fork's repo, in a
+   subfolder like `android/` — adjust the workflow's `working-directory`
+   if you nest it).
+2. Go to the **Actions** tab → the "Android Debug Build" run → download the
+   `papra-debug-apk` artifact (zipped) once it finishes (~3-5 min).
+3. Unzip, sideload the `.apk` on a device/emulator (enable "install unknown
+   apps" for whatever transfers it — Files app, ADB, etc.) for testing.
+
+The workflow doesn't rely on a committed Gradle wrapper jar — it uses
+`gradle/actions/setup-gradle` to provision Gradle 8.9 directly, then
+installs the Android SDK platform/build-tools needed for `compileSdk 35`.
+If you bump `compileSdk`/`targetSdk` in `app/build.gradle.kts`, bump the
+`sdkmanager` package versions in the workflow to match.
+
+This produces a **debug, unsigned** APK only — fine for sideloading/testing,
+not for Play Store distribution. Add a signing config + `assembleRelease`
+job later if you need signed release builds from CI.
+
 ## Running it
 
 This scaffold has source + Gradle config but no Gradle wrapper jar (binary,

@@ -54,8 +54,6 @@ fun PapraNavGraph(app: PapraApp, navController: NavHostController = rememberNavC
                     navController.navigate(Routes.documentDetail(doc.organizationId, doc.id))
                 },
                 onOpenSearch = { navController.navigate(Routes.SEARCH) },
-                onUploadFile = { /* TODO: launch SAF file picker, then documentRepository.uploadDocument */ },
-                onScanDocument = { /* TODO: launch camera capture flow */ },
             )
         }
         composable(Routes.SEARCH) {
