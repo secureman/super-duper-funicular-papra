@@ -47,8 +47,17 @@ data class DocumentsListResponse(
     @SerialName("documentsCount") val documentsCount: Int = 0,
 )
 
+// GET/PATCH/POST document endpoints wrap the payload in a "document" key.
+@Serializable
+data class DocumentEnvelope(val document: DocumentDto)
+
 @Serializable
 data class DocumentStatisticsResponse(
+    @SerialName("organizationStats") val organizationStats: OrganizationStats = OrganizationStats(),
+)
+
+@Serializable
+data class OrganizationStats(
     @SerialName("documentsCount") val documentsCount: Int = 0,
     @SerialName("documentsSize") val documentsSize: Long = 0,
 )

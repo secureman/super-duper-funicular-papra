@@ -1,6 +1,6 @@
 package com.papra.mobile.data.remote
 
-import com.papra.mobile.data.remote.dto.DocumentDto
+import com.papra.mobile.data.remote.dto.DocumentEnvelope
 import com.papra.mobile.data.remote.dto.DocumentStatisticsResponse
 import com.papra.mobile.data.remote.dto.DocumentsListResponse
 import com.papra.mobile.data.remote.dto.EmailSignInRequest
@@ -59,7 +59,7 @@ interface PapraApiService {
     suspend fun getDocument(
         @Path("organizationId") organizationId: String,
         @Path("documentId") documentId: String,
-    ): DocumentDto
+    ): DocumentEnvelope
 
     @Streaming
     @GET("api/organizations/{organizationId}/documents/{documentId}/file")
@@ -73,14 +73,14 @@ interface PapraApiService {
     suspend fun uploadDocument(
         @Path("organizationId") organizationId: String,
         @Part file: MultipartBody.Part,
-    ): DocumentDto
+    ): DocumentEnvelope
 
     @PATCH("api/organizations/{organizationId}/documents/{documentId}")
     suspend fun updateDocument(
         @Path("organizationId") organizationId: String,
         @Path("documentId") documentId: String,
         @Body body: UpdateDocumentRequest,
-    ): DocumentDto
+    ): DocumentEnvelope
 
     @DELETE("api/organizations/{organizationId}/documents/{documentId}")
     suspend fun trashDocument(

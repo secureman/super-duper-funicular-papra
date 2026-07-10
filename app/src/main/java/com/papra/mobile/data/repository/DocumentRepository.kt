@@ -39,7 +39,7 @@ class DocumentRepository(private val sessionStore: SessionStore) {
         api().listTrashedDocuments(organizationId).documents
 
     suspend fun getDocument(organizationId: String, documentId: String): DocumentDto =
-        api().getDocument(organizationId, documentId)
+        api().getDocument(organizationId, documentId).document
 
     suspend fun trashDocument(organizationId: String, documentId: String) {
         api().trashDocument(organizationId, documentId)
@@ -50,7 +50,7 @@ class DocumentRepository(private val sessionStore: SessionStore) {
             organizationId,
             documentId,
             com.papra.mobile.data.remote.dto.UpdateDocumentRequest(name = newName),
-        )
+        ).document
 
     suspend fun listTags(organizationId: String): List<TagDto> =
         api().listTags(organizationId).tags
@@ -58,6 +58,6 @@ class DocumentRepository(private val sessionStore: SessionStore) {
     suspend fun uploadDocument(organizationId: String, file: File, mimeType: String): DocumentDto {
         val requestBody = file.asRequestBody(mimeType.toMediaType())
         val part = MultipartBody.Part.createFormData("file", file.name, requestBody)
-        return api().uploadDocument(organizationId, part)
+        return api().uploadDocument(organizationId, part).document
     }
 }

@@ -22,7 +22,15 @@ object ApiClientFactory {
         val normalizedUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
 
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
+            // BODY level shows the raw JSON responses (and confirms whether the
+            // session cookie is actually being sent/accepted) -- essential for
+            // diagnosing auth/shape mismatches against a custom fork. Only ever
+            // active in debug builds since it does log the session cookie itself.
+            level = if (com.papra.mobile.BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
         }
 
         val client = OkHttpClient.Builder()
