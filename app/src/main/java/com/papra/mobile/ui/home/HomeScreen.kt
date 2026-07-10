@@ -62,6 +62,8 @@ fun HomeScreen(
     var fabExpanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
+    androidx.compose.runtime.LaunchedEffect(Unit) { viewModel.loadInitialData() }
+
     // Holds the temp file the camera intent is asked to write into; needed
     // because TakePicture() only returns success/failure, not the Uri.
     var pendingCaptureFile by remember { mutableStateOf<java.io.File?>(null) }

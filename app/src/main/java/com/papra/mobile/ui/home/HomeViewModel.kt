@@ -32,7 +32,15 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    init {
+    private var hasLoadedInitialData = false
+
+    /** Called from HomeScreen once it's actually composed (i.e. post-login), not
+     *  eagerly in init -- this ViewModel is created before login happens, so an
+     *  init-block load would race the server URL/session being saved and always
+     *  fail with "No server configured", then never retry. */
+    fun loadInitialData() {
+        if (hasLoadedInitialData) return
+        hasLoadedInitialData = true
         loadOrganizationsThenDocuments()
     }
 
