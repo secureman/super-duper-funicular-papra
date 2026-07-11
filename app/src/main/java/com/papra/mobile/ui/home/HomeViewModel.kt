@@ -127,6 +127,14 @@ class HomeViewModel(
         }
     }
 
+    /** One level up from the current folder -- used to make the system back button
+     *  step up through folders instead of exiting the app. */
+    fun navigateUp() {
+        val path = _uiState.value.breadcrumb
+        if (path.isEmpty()) return
+        navigateToBreadcrumb(path.size - 2)
+    }
+
     fun createFolder(name: String) {
         val org = _uiState.value.activeOrganization ?: return
         viewModelScope.launch {

@@ -38,7 +38,11 @@ class AuthRepository(private val sessionStore: SessionStore) {
             val api = ApiClientFactory.create(serverUrl, sessionStore)
             val response = api.signInWithEmail(EmailSignInRequest(email, password))
             if (!response.isSuccessful) {
-                return AuthResult.Error("Sign-in failed (${response.code()})")
+                // Surface the real reason (Better Auth returns a JSON body describing why,
+                // e.g. rate limiting or an origin check) instead of just the status code --
+                // a bare 403 with no detail was impossible to diagnose remotely.
+                val detail = response.errorBody()?.string()?.take(300)
+                return AuthResult.Error("Sign-in failed (${response.code()})${if (detail != null) ": $detail" else ""}")
             }
             // Set-Cookie headers look like "name=value; Path=/; HttpOnly; SameSite=Lax".
             // The request Cookie header must only contain "name=value" pairs -- replaying

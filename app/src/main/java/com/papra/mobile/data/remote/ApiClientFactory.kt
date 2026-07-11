@@ -36,6 +36,15 @@ object ApiClientFactory {
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(sessionStore))
             .addInterceptor(logging)
+            .addInterceptor { chain ->
+                // A bare "okhttp/4.x" User-Agent is a common trigger for reverse-proxy
+                // or WAF bot-protection rules that browsers never hit, which can look
+                // like an intermittent, unexplained 403 on auth endpoints specifically.
+                val requestWithUa = chain.request().newBuilder()
+                    .header("User-Agent", "PapraAndroid/1.0 (Android; Mobile)")
+                    .build()
+                chain.proceed(requestWithUa)
+            }
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build()

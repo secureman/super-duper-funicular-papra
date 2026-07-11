@@ -1,6 +1,8 @@
 package com.papra.mobile.ui.navigation
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -19,6 +21,7 @@ import com.papra.mobile.ui.home.HomeViewModel
 import com.papra.mobile.ui.search.SearchScreen
 
 object Routes {
+    const val SPLASH = "splash"
     const val LOGIN = "login"
     const val HOME = "home"
     const val SEARCH = "search"
@@ -33,7 +36,23 @@ fun PapraNavGraph(app: PapraApp, navController: NavHostController = rememberNavC
         factory = ViewModelFactory { HomeViewModel(app.documentRepository, app.sessionStore) },
     )
 
-    NavHost(navController = navController, startDestination = Routes.LOGIN) {
+    NavHost(navController = navController, startDestination = Routes.SPLASH) {
+        composable(Routes.SPLASH) {
+            LaunchedEffect(Unit) {
+                val hasSession = app.sessionStore.currentAuthMode() != com.papra.mobile.data.local.AuthMode.NONE &&
+                    app.sessionStore.currentServerUrl() != null
+                val destination = if (hasSession) Routes.HOME else Routes.LOGIN
+                navController.navigate(destination) {
+                    popUpTo(Routes.SPLASH) { inclusive = true }
+                }
+            }
+            androidx.compose.foundation.layout.Box(
+                modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+                contentAlignment = androidx.compose.ui.Alignment.Center,
+            ) {
+                androidx.compose.material3.CircularProgressIndicator()
+            }
+        }
         composable(Routes.LOGIN) {
             val authViewModel: AuthViewModel = viewModel(
                 factory = ViewModelFactory { AuthViewModel(app.authRepository) },

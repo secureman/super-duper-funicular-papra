@@ -3,6 +3,7 @@ package com.papra.mobile.ui.home
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -79,6 +80,8 @@ fun HomeScreen(
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) { viewModel.loadInitialData() }
+
+    BackHandler(enabled = state.breadcrumb.isNotEmpty()) { viewModel.navigateUp() }
 
     var pendingCaptureFile by remember { mutableStateOf<java.io.File?>(null) }
 
