@@ -1,13 +1,18 @@
 package com.papra.mobile.data.remote
 
+import com.papra.mobile.data.remote.dto.CreateFolderRequest
 import com.papra.mobile.data.remote.dto.DocumentEnvelope
 import com.papra.mobile.data.remote.dto.DocumentStatisticsResponse
 import com.papra.mobile.data.remote.dto.DocumentsListResponse
 import com.papra.mobile.data.remote.dto.EmailSignInRequest
 import com.papra.mobile.data.remote.dto.EmailSignInResponse
+import com.papra.mobile.data.remote.dto.FolderContentsResponse
+import com.papra.mobile.data.remote.dto.FolderEnvelope
+import com.papra.mobile.data.remote.dto.FoldersResponse
 import com.papra.mobile.data.remote.dto.OrganizationsResponse
 import com.papra.mobile.data.remote.dto.TagsResponse
 import com.papra.mobile.data.remote.dto.UpdateDocumentRequest
+import com.papra.mobile.data.remote.dto.UpdateFolderRequest
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -73,6 +78,7 @@ interface PapraApiService {
     suspend fun uploadDocument(
         @Path("organizationId") organizationId: String,
         @Part file: MultipartBody.Part,
+        @Query("folderId") folderId: String? = null,
     ): DocumentEnvelope
 
     @PATCH("api/organizations/{organizationId}/documents/{documentId}")
@@ -98,4 +104,36 @@ interface PapraApiService {
     suspend fun listTags(
         @Path("organizationId") organizationId: String,
     ): TagsResponse
+
+    // --- Folders (requires papra-folders-feature.patch applied server-side) ---
+    @GET("api/organizations/{organizationId}/folders")
+    suspend fun listFolders(
+        @Path("organizationId") organizationId: String,
+    ): FoldersResponse
+
+    @GET("api/organizations/{organizationId}/folders/contents")
+    suspend fun getFolderContents(
+        @Path("organizationId") organizationId: String,
+        @Query("folderId") folderId: String? = null,
+    ): FolderContentsResponse
+
+    @POST("api/organizations/{organizationId}/folders")
+    suspend fun createFolder(
+        @Path("organizationId") organizationId: String,
+        @Body body: CreateFolderRequest,
+    ): FolderEnvelope
+
+    @PATCH("api/organizations/{organizationId}/folders/{folderId}")
+    suspend fun updateFolder(
+        @Path("organizationId") organizationId: String,
+        @Path("folderId") folderId: String,
+        @Body body: UpdateFolderRequest,
+    ): FolderEnvelope
+
+    @DELETE("api/organizations/{organizationId}/folders/{folderId}")
+    suspend fun deleteFolder(
+        @Path("organizationId") organizationId: String,
+        @Path("folderId") folderId: String,
+        @Query("force") force: Boolean? = null,
+    ): Response<Unit>
 }

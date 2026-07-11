@@ -66,7 +66,39 @@ data class OrganizationStats(
 data class UpdateDocumentRequest(
     val name: String? = null,
     val content: String? = null,
+    @SerialName("folderId") val folderId: String? = null,
 )
+
+// --- Folders (requires papra-folders-feature.patch applied server-side) ---
+
+@Serializable
+data class FolderDto(
+    val id: String,
+    @SerialName("organizationId") val organizationId: String,
+    @SerialName("parentId") val parentId: String? = null,
+    val name: String,
+    @SerialName("documentsCount") val documentsCount: Int = 0,
+    @SerialName("createdAt") val createdAt: String? = null,
+    @SerialName("updatedAt") val updatedAt: String? = null,
+)
+
+@Serializable
+data class FoldersResponse(val folders: List<FolderDto> = emptyList())
+
+@Serializable
+data class FolderContentsResponse(
+    val folders: List<FolderDto> = emptyList(),
+    val documents: List<DocumentDto> = emptyList(),
+)
+
+@Serializable
+data class FolderEnvelope(val folder: FolderDto)
+
+@Serializable
+data class CreateFolderRequest(val name: String, val parentId: String? = null)
+
+@Serializable
+data class UpdateFolderRequest(val name: String? = null, val parentId: String? = null)
 
 // --- Better Auth email/password sign-in ---
 

@@ -1,9 +1,13 @@
 package com.papra.mobile
 
 import android.app.Application
+import coil.Coil
+import coil.ImageLoader
 import com.papra.mobile.data.local.SessionStore
+import com.papra.mobile.data.remote.AuthInterceptor
 import com.papra.mobile.data.repository.AuthRepository
 import com.papra.mobile.data.repository.DocumentRepository
+import okhttp3.OkHttpClient
 
 /**
  * Simple manual DI container (no Hilt) to keep the scaffold dependency-light.
@@ -23,5 +27,16 @@ class PapraApp : Application() {
         sessionStore = SessionStore(this)
         authRepository = AuthRepository(sessionStore)
         documentRepository = DocumentRepository(sessionStore)
+
+        // Thumbnails load from the same auth-gated /documents/{id}/file endpoint as
+        // everything else, so Coil needs the same AuthInterceptor Retrofit uses.
+        val imageLoader = ImageLoader.Builder(this)
+            .okHttpClient {
+                OkHttpClient.Builder()
+                    .addInterceptor(AuthInterceptor(sessionStore))
+                    .build()
+            }
+            .build()
+        Coil.setImageLoader(imageLoader)
     }
 }

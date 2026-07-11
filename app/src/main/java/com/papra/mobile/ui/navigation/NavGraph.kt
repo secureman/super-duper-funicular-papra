@@ -75,7 +75,7 @@ fun PapraNavGraph(app: PapraApp, navController: NavHostController = rememberNavC
             val orgId = backStackEntry.arguments?.getString("orgId").orEmpty()
             val documentId = backStackEntry.arguments?.getString("documentId").orEmpty()
             val detailViewModel: DocumentDetailViewModel = viewModel(
-                factory = ViewModelFactory { DocumentDetailViewModel(app.documentRepository, orgId) },
+                factory = ViewModelFactory { DocumentDetailViewModel(app.documentRepository, app.sessionStore, orgId) },
             )
             DocumentDetailScreen(
                 documentId = documentId,

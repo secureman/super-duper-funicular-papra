@@ -2,21 +2,25 @@ package com.papra.mobile.ui.document
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.papra.mobile.data.local.SessionStore
 import com.papra.mobile.data.remote.dto.DocumentDto
 import com.papra.mobile.data.repository.DocumentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 data class DocumentDetailUiState(
     val document: DocumentDto? = null,
+    val serverUrl: String? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
 )
 
 class DocumentDetailViewModel(
     private val documentRepository: DocumentRepository,
+    private val sessionStore: SessionStore,
     private val organizationId: String,
 ) : ViewModel() {
 
@@ -27,8 +31,9 @@ class DocumentDetailViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
+                val serverUrl = sessionStore.serverUrl.first()
                 val doc = documentRepository.getDocument(organizationId, documentId)
-                _uiState.value = _uiState.value.copy(document = doc, isLoading = false)
+                _uiState.value = _uiState.value.copy(document = doc, serverUrl = serverUrl, isLoading = false)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Failed to load document")
             }
@@ -44,5 +49,12 @@ class DocumentDetailViewModel(
                 _uiState.value = _uiState.value.copy(error = e.message ?: "Failed to delete document")
             }
         }
+    }
+
+    suspend fun downloadToFile(document: DocumentDto, destination: java.io.File): java.io.File? = try {
+        documentRepository.downloadDocumentFile(organizationId, document.id, destination)
+    } catch (e: Exception) {
+        _uiState.value = _uiState.value.copy(error = e.message ?: "Download failed")
+        null
     }
 }

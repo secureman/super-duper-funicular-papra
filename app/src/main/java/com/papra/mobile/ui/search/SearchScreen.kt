@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -19,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.papra.mobile.data.remote.dto.DocumentDto
 import com.papra.mobile.ui.components.DocumentListItem
 import com.papra.mobile.ui.home.HomeViewModel
@@ -32,6 +30,11 @@ fun SearchScreen(
     onBack: () -> Unit,
 ) {
     val state by homeViewModel.uiState.collectAsState()
+
+    fun thumbnailUrlFor(doc: DocumentDto): String? {
+        val serverUrl = state.serverUrl ?: return null
+        return "$serverUrl/api/organizations/${doc.organizationId}/documents/${doc.id}/file"
+    }
 
     Scaffold(
         topBar = {
@@ -55,7 +58,14 @@ fun SearchScreen(
     ) { padding ->
         LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
             items(state.documents, key = { it.id }) { doc ->
-                DocumentListItem(document = doc, onClick = { onOpenDocument(doc) }, onMoreClick = {})
+                DocumentListItem(
+                    document = doc,
+                    thumbnailUrl = thumbnailUrlFor(doc),
+                    onClick = { onOpenDocument(doc) },
+                    onRename = { newName -> homeViewModel.renameDocument(doc, newName) },
+                    onDelete = { homeViewModel.trashDocument(doc) },
+                    onShare = { /* handled from Home; search results reuse the same repo state */ },
+                )
             }
         }
     }
