@@ -131,8 +131,9 @@ fun HomeScreen(
 
     fun shareDocument(doc: DocumentDto) {
         coroutineScope.launch {
-            val dest = java.io.File(context.cacheDir, doc.name)
-            val file = viewModel.downloadDocumentToFile(doc, dest)
+            val file = com.papra.mobile.util.getOrDownload(context, doc) { dest ->
+                viewModel.downloadDocumentToFile(doc, dest)
+            }
             if (file != null) {
                 val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
                 val intent = Intent(Intent.ACTION_SEND).apply {

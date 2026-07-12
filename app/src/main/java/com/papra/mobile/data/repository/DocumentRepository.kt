@@ -110,11 +110,20 @@ class DocumentRepository(private val sessionStore: SessionStore) {
 
     suspend fun createTag(organizationId: String, name: String, color: String): TagDto {
         val plainText = "text/plain".toMediaType()
-        return api().createTag(
-            organizationId,
-            name = name.toRequestBody(plainText),
-            color = color.toRequestBody(plainText),
-        ).tag
+        return try {
+            api().createTag(
+                organizationId,
+                name = name.toRequestBody(plainText),
+                color = color.toRequestBody(plainText),
+            ).tag
+        } catch (e: retrofit2.HttpException) {
+            // Retrofit auto-throws HttpException for calls typed to return the body
+            // directly, but its .message is just the generic status phrase ("HTTP 400
+            // Bad Request") -- it drops the response body, which is where the server
+            // actually explains what was wrong with the request. Unwrap it explicitly.
+            val detail = e.response()?.errorBody()?.string()?.take(300)
+            throw IllegalStateException("Create tag failed (${e.code()})${if (detail != null) ": $detail" else ""}", e)
+        }
     }
 
     suspend fun deleteTag(organizationId: String, tagId: String) {

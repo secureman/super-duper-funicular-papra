@@ -81,8 +81,9 @@ fun DocumentDetailScreen(
 
     fun openExternally(doc: DocumentDto) {
         coroutineScope.launch {
-            val dest = java.io.File(context.cacheDir, doc.name)
-            val file = viewModel.downloadToFile(doc, dest)
+            val file = com.papra.mobile.util.getOrDownload(context, doc) { dest ->
+                viewModel.downloadToFile(doc, dest)
+            }
             if (file != null) {
                 val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
                 val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -96,8 +97,9 @@ fun DocumentDetailScreen(
 
     fun shareExternally(doc: DocumentDto) {
         coroutineScope.launch {
-            val dest = java.io.File(context.cacheDir, doc.name)
-            val file = viewModel.downloadToFile(doc, dest)
+            val file = com.papra.mobile.util.getOrDownload(context, doc) { dest ->
+                viewModel.downloadToFile(doc, dest)
+            }
             if (file != null) {
                 val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
                 val intent = Intent(Intent.ACTION_SEND).apply {
@@ -121,6 +123,9 @@ fun DocumentDetailScreen(
                 },
                 actions = {
                     state.document?.let { doc ->
+                        IconButton(onClick = { openExternally(doc) }) {
+                            Icon(Icons.Filled.OpenInNew, contentDescription = "Open with...")
+                        }
                         IconButton(onClick = { shareExternally(doc) }) {
                             Icon(Icons.Filled.Share, contentDescription = "Share")
                         }
@@ -147,9 +152,10 @@ fun DocumentDetailScreen(
 
                     LaunchedEffect(doc.id, isPdf) {
                         if (isPdf) {
-                            val dest = java.io.File(context.cacheDir, "preview_${doc.id}.pdf")
-                            val downloaded = viewModel.downloadToFile(doc, dest)
-                            if (downloaded != null) pdfFile = downloaded else pdfDownloadError = "Could not download PDF for preview"
+                            val file = com.papra.mobile.util.getOrDownload(context, doc) { dest ->
+                                viewModel.downloadToFile(doc, dest)
+                            }
+                            if (file != null) pdfFile = file else pdfDownloadError = "Could not download PDF for preview"
                         }
                     }
 
