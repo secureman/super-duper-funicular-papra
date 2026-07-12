@@ -53,9 +53,6 @@ class DocumentRepository(private val sessionStore: SessionStore) {
             com.papra.mobile.data.remote.dto.UpdateDocumentRequest(name = newName),
         ).document
 
-    suspend fun listTags(organizationId: String): List<TagDto> =
-        api().listTags(organizationId).tags
-
     suspend fun uploadDocument(
         organizationId: String,
         file: File,
