@@ -43,7 +43,7 @@ class DocumentRepository(private val sessionStore: SessionStore) {
         api().getDocument(organizationId, documentId).document
 
     suspend fun trashDocument(organizationId: String, documentId: String) {
-        api().trashDocument(organizationId, documentId)
+        api().trashDocument(organizationId, documentId).throwIfError("Delete document")
     }
 
     suspend fun renameDocument(organizationId: String, documentId: String, newName: String): DocumentDto =
@@ -100,7 +100,7 @@ class DocumentRepository(private val sessionStore: SessionStore) {
         ).document
 
     suspend fun deleteFolder(organizationId: String, folderId: String, force: Boolean = false) {
-        api().deleteFolder(organizationId, folderId, force)
+        api().deleteFolder(organizationId, folderId, force).throwIfError("Delete folder")
     }
 
     // --- Tags ---
@@ -118,14 +118,27 @@ class DocumentRepository(private val sessionStore: SessionStore) {
     }
 
     suspend fun deleteTag(organizationId: String, tagId: String) {
-        api().deleteTag(organizationId, tagId)
+        api().deleteTag(organizationId, tagId).throwIfError("Delete tag")
     }
 
     suspend fun addTagToDocument(organizationId: String, documentId: String, tagId: String) {
         api().addTagToDocument(organizationId, documentId, com.papra.mobile.data.remote.dto.AddTagToDocumentRequest(tagId))
+            .throwIfError("Add tag")
     }
 
     suspend fun removeTagFromDocument(organizationId: String, documentId: String, tagId: String) {
-        api().removeTagFromDocument(organizationId, documentId, tagId)
+        api().removeTagFromDocument(organizationId, documentId, tagId).throwIfError("Remove tag")
+    }
+
+    /** Retrofit only auto-throws on failure for calls whose return type IS the body;
+     *  calls typed to return a raw Response<T> (used here for empty-body endpoints)
+     *  treat 4xx/5xx as a normal, non-exceptional result unless checked manually.
+     *  Without this, a rejected request (missing permission, conflict, etc.) looks
+     *  identical to success from the caller's point of view. */
+    private fun retrofit2.Response<Unit>.throwIfError(action: String) {
+        if (!isSuccessful) {
+            val detail = errorBody()?.string()?.take(300)
+            error("$action failed (${code()})${if (detail != null) ": $detail" else ""}")
+        }
     }
 }

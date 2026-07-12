@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -54,6 +57,7 @@ import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.papra.mobile.data.remote.dto.DocumentDto
 import com.papra.mobile.ui.components.fileVisualFor
+import com.papra.mobile.ui.pdf.PdfPagesView
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -135,35 +139,80 @@ fun DocumentDetailScreen(
                     val doc = state.document!!
                     val visual = fileVisualFor(doc.mimeType)
                     val isImage = doc.mimeType?.startsWith("image/") == true
+                    val isPdf = doc.mimeType == "application/pdf"
                     val url = fileUrl(doc)
 
-                    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(4f / 3f),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            if (isImage && url != null) {
-                                AsyncImage(
-                                    model = url,
-                                    contentDescription = doc.name,
-                                    contentScale = ContentScale.Fit,
-                                    modifier = Modifier.fillMaxSize(),
-                                )
-                            } else {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(
-                                        imageVector = visual.icon,
-                                        contentDescription = null,
-                                        tint = visual.color,
-                                        modifier = Modifier.fillMaxWidth(0.3f).aspectRatio(1f),
+                    var pdfFile by remember(doc.id) { mutableStateOf<java.io.File?>(null) }
+                    var pdfDownloadError by remember(doc.id) { mutableStateOf<String?>(null) }
+
+                    LaunchedEffect(doc.id, isPdf) {
+                        if (isPdf) {
+                            val dest = java.io.File(context.cacheDir, "preview_${doc.id}.pdf")
+                            val downloaded = viewModel.downloadToFile(doc, dest)
+                            if (downloaded != null) pdfFile = downloaded else pdfDownloadError = "Could not download PDF for preview"
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp),
+                    ) {
+                        state.error?.let {
+                            Text(
+                                it,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(bottom = 8.dp),
+                            )
+                        }
+                        when {
+                            isPdf -> {
+                                if (pdfFile != null) {
+                                    // PdfPagesView is itself scrollable, so it gets a bounded
+                                    // height here rather than fillMaxSize -- avoids nesting two
+                                    // unbounded scrollables inside the outer scroll container.
+                                    PdfPagesView(file = pdfFile!!, modifier = Modifier.fillMaxWidth().height(500.dp))
+                                } else if (pdfDownloadError != null) {
+                                    Text(pdfDownloadError ?: "", color = MaterialTheme.colorScheme.error)
+                                } else {
+                                    Box(modifier = Modifier.fillMaxWidth().height(300.dp), contentAlignment = Alignment.Center) {
+                                        CircularProgressIndicator()
+                                    }
+                                }
+                            }
+                            isImage && url != null -> {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3f),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    AsyncImage(
+                                        model = url,
+                                        contentDescription = doc.name,
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier.fillMaxSize(),
                                     )
-                                    androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
-                                    Button(onClick = { openExternally(doc) }) {
-                                        Icon(Icons.Filled.OpenInNew, contentDescription = null)
-                                        androidx.compose.foundation.layout.Spacer(Modifier.padding(start = 4.dp))
-                                        Text("Open")
+                                }
+                            }
+                            else -> {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3f),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(
+                                            imageVector = visual.icon,
+                                            contentDescription = null,
+                                            tint = visual.color,
+                                            modifier = Modifier.fillMaxWidth(0.3f).aspectRatio(1f),
+                                        )
+                                        Spacer(Modifier.padding(top = 12.dp))
+                                        Button(onClick = { openExternally(doc) }) {
+                                            Icon(Icons.Filled.OpenInNew, contentDescription = null)
+                                            Spacer(Modifier.padding(start = 4.dp))
+                                            Text("Open")
+                                        }
                                     }
                                 }
                             }
