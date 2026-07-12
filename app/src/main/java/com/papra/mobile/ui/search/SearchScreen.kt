@@ -65,6 +65,7 @@ fun SearchScreen(
                     onRename = { newName -> homeViewModel.renameDocument(doc, newName) },
                     onDelete = { homeViewModel.trashDocument(doc) },
                     onShare = { /* handled from Home; search results reuse the same repo state */ },
+                    onMove = { /* move-to-folder picker lives on Home; not duplicated here */ },
                 )
             }
         }

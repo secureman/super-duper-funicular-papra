@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 data class DocumentDetailUiState(
     val document: DocumentDto? = null,
     val serverUrl: String? = null,
+    val availableTags: List<com.papra.mobile.data.remote.dto.TagDto> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
 )
@@ -36,6 +37,55 @@ class DocumentDetailViewModel(
                 _uiState.value = _uiState.value.copy(document = doc, serverUrl = serverUrl, isLoading = false)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Failed to load document")
+            }
+        }
+    }
+
+    fun loadAvailableTags() {
+        viewModelScope.launch {
+            try {
+                val tags = documentRepository.listTags(organizationId)
+                _uiState.value = _uiState.value.copy(availableTags = tags)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message ?: "Failed to load tags")
+            }
+        }
+    }
+
+    fun addTag(tagId: String) {
+        val doc = _uiState.value.document ?: return
+        viewModelScope.launch {
+            try {
+                documentRepository.addTagToDocument(organizationId, doc.id, tagId)
+                load(doc.id)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message ?: "Failed to add tag")
+            }
+        }
+    }
+
+    fun removeTag(tagId: String) {
+        val doc = _uiState.value.document ?: return
+        viewModelScope.launch {
+            try {
+                documentRepository.removeTagFromDocument(organizationId, doc.id, tagId)
+                load(doc.id)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message ?: "Failed to remove tag")
+            }
+        }
+    }
+
+    /** Creates a brand-new org tag and immediately attaches it to the current document. */
+    fun createAndAddTag(name: String, colorHex: String) {
+        val doc = _uiState.value.document ?: return
+        viewModelScope.launch {
+            try {
+                val tag = documentRepository.createTag(organizationId, name, colorHex)
+                documentRepository.addTagToDocument(organizationId, doc.id, tag.id)
+                load(doc.id)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message ?: "Failed to create tag")
             }
         }
     }

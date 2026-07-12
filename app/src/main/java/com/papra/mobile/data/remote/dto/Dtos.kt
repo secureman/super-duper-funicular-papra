@@ -27,6 +27,19 @@ data class TagsResponse(
 )
 
 @Serializable
+data class TagEnvelope(val tag: TagDto)
+
+@Serializable
+data class UpdateTagRequest(
+    val name: String? = null,
+    val color: String? = null,
+    val description: String? = null,
+)
+
+@Serializable
+data class AddTagToDocumentRequest(val tagId: String)
+
+@Serializable
 data class DocumentDto(
     val id: String,
     val name: String,

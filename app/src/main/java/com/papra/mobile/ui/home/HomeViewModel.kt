@@ -30,6 +30,9 @@ data class HomeUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val searchQuery: String = "",
+    // Flat list of every folder in the org, used by the "move to folder" picker
+    // (which needs to jump anywhere, not just current-level children).
+    val allFoldersForPicker: List<FolderDto> = emptyList(),
 )
 
 class HomeViewModel(
@@ -208,6 +211,31 @@ class HomeViewModel(
         } catch (e: Exception) {
             _uiState.value = _uiState.value.copy(error = e.message ?: "Download failed")
             null
+        }
+    }
+
+    fun loadFoldersForPicker() {
+        val org = _uiState.value.activeOrganization ?: return
+        viewModelScope.launch {
+            try {
+                val folders = documentRepository.listFolders(org.id)
+                _uiState.value = _uiState.value.copy(allFoldersForPicker = folders)
+            } catch (e: Exception) {
+                // Folders unsupported/unavailable -- leave the picker showing "Root" only.
+                _uiState.value = _uiState.value.copy(allFoldersForPicker = emptyList())
+            }
+        }
+    }
+
+    fun moveDocumentToFolder(document: DocumentDto, folderId: String?) {
+        val org = _uiState.value.activeOrganization ?: return
+        viewModelScope.launch {
+            try {
+                documentRepository.moveDocumentToFolder(org.id, document.id, folderId)
+                loadFolder(org.id, _uiState.value.currentFolderId, _uiState.value.breadcrumb)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message ?: "Move failed")
+            }
         }
     }
 

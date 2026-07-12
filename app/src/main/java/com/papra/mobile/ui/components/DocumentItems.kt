@@ -54,6 +54,7 @@ fun DocumentContextMenu(
     onRename: (String) -> Unit,
     onDelete: () -> Unit,
     onShare: () -> Unit,
+    onMove: () -> Unit,
     currentName: String,
 ) {
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -63,6 +64,11 @@ fun DocumentContextMenu(
             text = { Text("Rename") },
             leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
             onClick = { onDismiss(); showRenameDialog = true },
+        )
+        DropdownMenuItem(
+            text = { Text("Move to folder") },
+            leadingIcon = { Icon(Icons.Filled.DriveFileMove, contentDescription = null) },
+            onClick = { onDismiss(); onMove() },
         )
         DropdownMenuItem(
             text = { Text("Share / Download") },
@@ -106,6 +112,7 @@ fun DocumentGridItem(
     onRename: (String) -> Unit,
     onDelete: () -> Unit,
     onShare: () -> Unit,
+    onMove: () -> Unit,
 ) {
     val visual = fileVisualFor(document.mimeType)
     var menuExpanded by remember { mutableStateOf(false) }
@@ -164,6 +171,7 @@ fun DocumentGridItem(
                     onRename = onRename,
                     onDelete = onDelete,
                     onShare = onShare,
+                    onMove = onMove,
                     currentName = document.name,
                 )
             }
@@ -180,6 +188,7 @@ fun DocumentListItem(
     onRename: (String) -> Unit,
     onDelete: () -> Unit,
     onShare: () -> Unit,
+    onMove: () -> Unit,
 ) {
     val visual = fileVisualFor(document.mimeType)
     var menuExpanded by remember { mutableStateOf(false) }
@@ -237,6 +246,7 @@ fun DocumentListItem(
                 onRename = onRename,
                 onDelete = onDelete,
                 onShare = onShare,
+                onMove = onMove,
                 currentName = document.name,
             )
         }

@@ -16,8 +16,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.item
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.item
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -76,6 +79,7 @@ fun HomeScreen(
     val state by viewModel.uiState.collectAsState()
     var fabExpanded by remember { mutableStateOf(false) }
     var showNewFolderDialog by remember { mutableStateOf(false) }
+    var showMoveDialogFor by remember { mutableStateOf<DocumentDto?>(null) }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -244,51 +248,95 @@ fun HomeScreen(
                         contentPadding = PaddingValues(16.dp),
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        items(state.folders, key = { "folder-${it.id}" }) { folder ->
-                            Box(modifier = Modifier.padding(6.dp)) {
-                                FolderGridItem(
-                                    name = folder.name,
-                                    documentsCount = folder.documentsCount,
-                                    onClick = { viewModel.openFolder(folder) },
-                                    onDelete = { viewModel.deleteFolder(folder) },
+                        if (state.documents.isNotEmpty()) {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                Text(
+                                    "Recent files",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(vertical = 8.dp),
                                 )
                             }
+                            items(state.documents, key = { it.id }) { doc ->
+                                Box(modifier = Modifier.padding(6.dp)) {
+                                    DocumentGridItem(
+                                        document = doc,
+                                        thumbnailUrl = thumbnailUrlFor(doc),
+                                        onClick = { onOpenDocument(doc) },
+                                        onRename = { newName -> viewModel.renameDocument(doc, newName) },
+                                        onDelete = { viewModel.trashDocument(doc) },
+                                        onShare = { shareDocument(doc) },
+                                        onMove = {
+                                            viewModel.loadFoldersForPicker()
+                                            showMoveDialogFor = doc
+                                        },
+                                    )
+                                }
+                            }
                         }
-                        items(state.documents, key = { it.id }) { doc ->
-                            Box(modifier = Modifier.padding(6.dp)) {
-                                DocumentGridItem(
-                                    document = doc,
-                                    thumbnailUrl = thumbnailUrlFor(doc),
-                                    onClick = { onOpenDocument(doc) },
-                                    onRename = { newName -> viewModel.renameDocument(doc, newName) },
-                                    onDelete = { viewModel.trashDocument(doc) },
-                                    onShare = { shareDocument(doc) },
+                        if (state.folders.isNotEmpty()) {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                Text(
+                                    "Folders",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
                                 )
+                            }
+                            items(state.folders, key = { "folder-${it.id}" }) { folder ->
+                                Box(modifier = Modifier.padding(6.dp)) {
+                                    FolderGridItem(
+                                        name = folder.name,
+                                        documentsCount = folder.documentsCount,
+                                        onClick = { viewModel.openFolder(folder) },
+                                        onDelete = { viewModel.deleteFolder(folder) },
+                                    )
+                                }
                             }
                         }
                     }
                 }
                 else -> {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(state.folders, key = { "folder-${it.id}" }) { folder ->
-                            Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
-                                FolderGridItem(
-                                    name = folder.name,
-                                    documentsCount = folder.documentsCount,
-                                    onClick = { viewModel.openFolder(folder) },
-                                    onDelete = { viewModel.deleteFolder(folder) },
+                        if (state.documents.isNotEmpty()) {
+                            item {
+                                Text(
+                                    "Recent files",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                )
+                            }
+                            items(state.documents, key = { it.id }) { doc ->
+                                DocumentListItem(
+                                    document = doc,
+                                    thumbnailUrl = thumbnailUrlFor(doc),
+                                    onClick = { onOpenDocument(doc) },
+                                    onRename = { newName -> viewModel.renameDocument(doc, newName) },
+                                    onDelete = { viewModel.trashDocument(doc) },
+                                    onShare = { shareDocument(doc) },
+                                    onMove = {
+                                        viewModel.loadFoldersForPicker()
+                                        showMoveDialogFor = doc
+                                    },
                                 )
                             }
                         }
-                        items(state.documents, key = { it.id }) { doc ->
-                            DocumentListItem(
-                                document = doc,
-                                thumbnailUrl = thumbnailUrlFor(doc),
-                                onClick = { onOpenDocument(doc) },
-                                onRename = { newName -> viewModel.renameDocument(doc, newName) },
-                                onDelete = { viewModel.trashDocument(doc) },
-                                onShare = { shareDocument(doc) },
-                            )
+                        if (state.folders.isNotEmpty()) {
+                            item {
+                                Text(
+                                    "Folders",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                )
+                            }
+                            items(state.folders, key = { "folder-${it.id}" }) { folder ->
+                                Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
+                                    FolderGridItem(
+                                        name = folder.name,
+                                        documentsCount = folder.documentsCount,
+                                        onClick = { viewModel.openFolder(folder) },
+                                        onDelete = { viewModel.deleteFolder(folder) },
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -310,6 +358,32 @@ fun HomeScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showNewFolderDialog = false }) { Text("Cancel") }
+            },
+        )
+    }
+
+    showMoveDialogFor?.let { doc ->
+        AlertDialog(
+            onDismissRequest = { showMoveDialogFor = null },
+            title = { Text("Move \"${doc.name}\"") },
+            text = {
+                LazyColumn {
+                    item {
+                        androidx.compose.material3.TextButton(onClick = {
+                            viewModel.moveDocumentToFolder(doc, null)
+                            showMoveDialogFor = null
+                        }) { Text("Root (no folder)") }
+                    }
+                    items(state.allFoldersForPicker, key = { it.id }) { folder ->
+                        androidx.compose.material3.TextButton(onClick = {
+                            viewModel.moveDocumentToFolder(doc, folder.id)
+                            showMoveDialogFor = null
+                        }) { Text(folder.name) }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showMoveDialogFor = null }) { Text("Cancel") }
             },
         )
     }

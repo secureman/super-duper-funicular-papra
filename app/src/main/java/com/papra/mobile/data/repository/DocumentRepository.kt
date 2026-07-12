@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.first
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
 class DocumentRepository(private val sessionStore: SessionStore) {
@@ -103,5 +104,31 @@ class DocumentRepository(private val sessionStore: SessionStore) {
 
     suspend fun deleteFolder(organizationId: String, folderId: String, force: Boolean = false) {
         api().deleteFolder(organizationId, folderId, force)
+    }
+
+    // --- Tags ---
+
+    suspend fun listTags(organizationId: String): List<TagDto> =
+        api().listTags(organizationId).tags
+
+    suspend fun createTag(organizationId: String, name: String, color: String): TagDto {
+        val plainText = "text/plain".toMediaType()
+        return api().createTag(
+            organizationId,
+            name = name.toRequestBody(plainText),
+            color = color.toRequestBody(plainText),
+        ).tag
+    }
+
+    suspend fun deleteTag(organizationId: String, tagId: String) {
+        api().deleteTag(organizationId, tagId)
+    }
+
+    suspend fun addTagToDocument(organizationId: String, documentId: String, tagId: String) {
+        api().addTagToDocument(organizationId, documentId, com.papra.mobile.data.remote.dto.AddTagToDocumentRequest(tagId))
+    }
+
+    suspend fun removeTagFromDocument(organizationId: String, documentId: String, tagId: String) {
+        api().removeTagFromDocument(organizationId, documentId, tagId)
     }
 }

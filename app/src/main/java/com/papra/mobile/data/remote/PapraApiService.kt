@@ -1,5 +1,6 @@
 package com.papra.mobile.data.remote
 
+import com.papra.mobile.data.remote.dto.AddTagToDocumentRequest
 import com.papra.mobile.data.remote.dto.CreateFolderRequest
 import com.papra.mobile.data.remote.dto.DocumentEnvelope
 import com.papra.mobile.data.remote.dto.DocumentStatisticsResponse
@@ -10,9 +11,12 @@ import com.papra.mobile.data.remote.dto.FolderContentsResponse
 import com.papra.mobile.data.remote.dto.FolderEnvelope
 import com.papra.mobile.data.remote.dto.FoldersResponse
 import com.papra.mobile.data.remote.dto.OrganizationsResponse
+import com.papra.mobile.data.remote.dto.TagEnvelope
 import com.papra.mobile.data.remote.dto.TagsResponse
 import com.papra.mobile.data.remote.dto.UpdateDocumentRequest
 import com.papra.mobile.data.remote.dto.UpdateFolderRequest
+import com.papra.mobile.data.remote.dto.UpdateTagRequest
+import okhttp3.RequestBody
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -22,6 +26,7 @@ import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -104,6 +109,42 @@ interface PapraApiService {
     suspend fun listTags(
         @Path("organizationId") organizationId: String,
     ): TagsResponse
+
+    // Docs specify this as form-data, not JSON, unlike most other write endpoints.
+    @Multipart
+    @POST("api/organizations/{organizationId}/tags")
+    suspend fun createTag(
+        @Path("organizationId") organizationId: String,
+        @Part("name") name: RequestBody,
+        @Part("color") color: RequestBody,
+    ): TagEnvelope
+
+    @PUT("api/organizations/{organizationId}/tags/{tagId}")
+    suspend fun updateTag(
+        @Path("organizationId") organizationId: String,
+        @Path("tagId") tagId: String,
+        @Body body: UpdateTagRequest,
+    ): TagEnvelope
+
+    @DELETE("api/organizations/{organizationId}/tags/{tagId}")
+    suspend fun deleteTag(
+        @Path("organizationId") organizationId: String,
+        @Path("tagId") tagId: String,
+    ): Response<Unit>
+
+    @POST("api/organizations/{organizationId}/documents/{documentId}/tags")
+    suspend fun addTagToDocument(
+        @Path("organizationId") organizationId: String,
+        @Path("documentId") documentId: String,
+        @Body body: AddTagToDocumentRequest,
+    ): Response<Unit>
+
+    @DELETE("api/organizations/{organizationId}/documents/{documentId}/tags/{tagId}")
+    suspend fun removeTagFromDocument(
+        @Path("organizationId") organizationId: String,
+        @Path("documentId") documentId: String,
+        @Path("tagId") tagId: String,
+    ): Response<Unit>
 
     // --- Folders (requires papra-folders-feature.patch applied server-side) ---
     @GET("api/organizations/{organizationId}/folders")
