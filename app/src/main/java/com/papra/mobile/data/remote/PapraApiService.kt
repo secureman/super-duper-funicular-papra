@@ -2,6 +2,7 @@ package com.papra.mobile.data.remote
 
 import com.papra.mobile.data.remote.dto.AddTagToDocumentRequest
 import com.papra.mobile.data.remote.dto.CreateFolderRequest
+import com.papra.mobile.data.remote.dto.CreateTagRequest
 import com.papra.mobile.data.remote.dto.DocumentEnvelope
 import com.papra.mobile.data.remote.dto.DocumentStatisticsResponse
 import com.papra.mobile.data.remote.dto.DocumentsListResponse
@@ -16,7 +17,6 @@ import com.papra.mobile.data.remote.dto.TagsResponse
 import com.papra.mobile.data.remote.dto.UpdateDocumentRequest
 import com.papra.mobile.data.remote.dto.UpdateFolderRequest
 import com.papra.mobile.data.remote.dto.UpdateTagRequest
-import okhttp3.RequestBody
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -110,13 +110,14 @@ interface PapraApiService {
         @Path("organizationId") organizationId: String,
     ): TagsResponse
 
-    // Docs specify this as form-data, not JSON, unlike most other write endpoints.
-    @Multipart
+    // Docs describe this as form-data, but the actual server validator expects a
+    // plain JSON body like every other write endpoint -- multipart parts were
+    // arriving as an empty/unparsed body server-side (confirmed via a 400
+    // response showing both "name" and "color" as undefined).
     @POST("api/organizations/{organizationId}/tags")
     suspend fun createTag(
         @Path("organizationId") organizationId: String,
-        @Part("name") name: RequestBody,
-        @Part("color") color: RequestBody,
+        @Body body: CreateTagRequest,
     ): TagEnvelope
 
     @PUT("api/organizations/{organizationId}/tags/{tagId}")

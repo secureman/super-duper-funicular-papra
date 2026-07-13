@@ -37,6 +37,12 @@ data class UpdateTagRequest(
 )
 
 @Serializable
+data class CreateTagRequest(
+    val name: String,
+    val color: String,
+)
+
+@Serializable
 data class AddTagToDocumentRequest(val tagId: String)
 
 @Serializable

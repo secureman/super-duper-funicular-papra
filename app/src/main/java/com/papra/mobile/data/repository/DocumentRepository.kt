@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.first
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
 class DocumentRepository(private val sessionStore: SessionStore) {
@@ -109,13 +108,8 @@ class DocumentRepository(private val sessionStore: SessionStore) {
         api().listTags(organizationId).tags
 
     suspend fun createTag(organizationId: String, name: String, color: String): TagDto {
-        val plainText = "text/plain".toMediaType()
         return try {
-            api().createTag(
-                organizationId,
-                name = name.toRequestBody(plainText),
-                color = color.toRequestBody(plainText),
-            ).tag
+            api().createTag(organizationId, com.papra.mobile.data.remote.dto.CreateTagRequest(name, color)).tag
         } catch (e: retrofit2.HttpException) {
             // Retrofit auto-throws HttpException for calls typed to return the body
             // directly, but its .message is just the generic status phrase ("HTTP 400
