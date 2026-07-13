@@ -1,6 +1,10 @@
 package com.papra.mobile.ui.document
 
 import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +53,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -288,6 +293,14 @@ fun DocumentDetailScreen(
         val currentTagIds = doc?.tags?.map { it.id }?.toSet() ?: emptySet()
         val pickableTags = state.availableTags.filter { it.id !in currentTagIds }
         var newTagName by remember { mutableStateOf("") }
+        // Common hex swatches. If the server rejects these too, the error banner
+        // will now show the real reason (see createTag's error unwrapping) --
+        // e.g. if it turns out to require a named palette instead of raw hex.
+        val colorSwatches = listOf(
+            "#EA4335", "#FBBC05", "#34A853", "#4285F4",
+            "#9C27B0", "#00ACC1", "#FF6D00", "#5F6368",
+        )
+        var selectedColor by remember { mutableStateOf(colorSwatches[0]) }
 
         AlertDialog(
             onDismissRequest = { showTagDialog = false },
@@ -316,19 +329,36 @@ fun DocumentDetailScreen(
                         onValueChange = { newTagName = it },
                         singleLine = true,
                         label = { Text("Tag name") },
-                        modifier = Modifier.padding(top = 8.dp),
+                        modifier = Modifier.padding(top = 8.dp, bottom = 12.dp),
                     )
+                    Text("Color", style = MaterialTheme.typography.labelLarge)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.padding(top = 8.dp),
+                    ) {
+                        colorSwatches.forEach { hex ->
+                            val isSelected = hex == selectedColor
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(android.graphics.Color.parseColor(hex)))
+                                    .border(
+                                        width = if (isSelected) 3.dp else 0.dp,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        shape = CircleShape,
+                                    )
+                                    .clickable { selectedColor = hex },
+                            )
+                        }
+                    }
                 }
             },
             confirmButton = {
                 TextButton(
                     enabled = newTagName.isNotBlank(),
                     onClick = {
-                        // Deterministic color per name keeps it simple -- no color
-                        // picker UI, but still gives tags visually distinct colors.
-                        val palette = listOf("#EA4335", "#4285F4", "#34A853", "#FBBC05", "#9C27B0", "#00ACC1")
-                        val color = palette[Math.floorMod(newTagName.hashCode(), palette.size)]
-                        viewModel.createAndAddTag(newTagName, color)
+                        viewModel.createAndAddTag(newTagName, selectedColor)
                         showTagDialog = false
                     },
                 ) { Text("Create & add") }
