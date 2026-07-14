@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -120,7 +121,7 @@ fun DocumentGridItem(
 
     Card(
         onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -128,7 +129,7 @@ fun DocumentGridItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                 .background(visual.color.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center,
         ) {
@@ -152,14 +153,14 @@ fun DocumentGridItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 10.dp, end = 2.dp),
+                .padding(start = 12.dp, end = 4.dp),
         ) {
             Text(
                 text = document.name,
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f).padding(vertical = 10.dp),
+                modifier = Modifier.weight(1f).padding(vertical = 12.dp),
             )
             Box {
                 IconButton(onClick = { menuExpanded = true }) {
@@ -199,13 +200,13 @@ fun DocumentListItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .background(visual.color.copy(alpha = 0.12f)),
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(visual.color.copy(alpha = 0.14f)),
             contentAlignment = Alignment.Center,
         ) {
             if (isImage && thumbnailUrl != null) {
@@ -259,7 +260,7 @@ fun FolderGridItem(name: String, documentsCount: Int, onClick: () -> Unit, onDel
     var menuExpanded by remember { mutableStateOf(false) }
     Card(
         onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         modifier = Modifier.fillMaxWidth(),
     ) {

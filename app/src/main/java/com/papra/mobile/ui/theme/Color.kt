@@ -2,28 +2,41 @@ package com.papra.mobile.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Papra brand blue, kept close to Drive's blue family so the app feels
-// like part of the same "Google Workspace" visual language.
-val PapraBlue = Color(0xFF1A73E8)
-val PapraBlueDark = Color(0xFF8AB4F8)
-val PapraBlueContainer = Color(0xFFD3E3FD)
+// Papra's palette is grounded in its actual subject: paper, ink, and the
+// stamped seals found on real archived documents (see the legal paperwork
+// scans this app was built to manage) -- not a generic Material blue.
 
-val SurfaceLight = Color(0xFFFDFBFF)
-val SurfaceDark = Color(0xFF1A1C1E)
-val SurfaceVariantLight = Color(0xFFF1F3F4) // Drive's list-row grey
-val SurfaceVariantDark = Color(0xFF2A2D30)
+// Ink: deep desaturated navy, the primary brand color.
+val Ink = Color(0xFF2E3A55)
+val InkLight = Color(0xFF4A5A7D)
+val InkContainer = Color(0xFFDCE3F0)
+val OnInkContainer = Color(0xFF17233D)
 
-val OnSurfaceLight = Color(0xFF1F1F1F)
-val OnSurfaceDark = Color(0xFFE3E2E6)
+// Seal: brick-red accent, used sparingly for one signature touch (file-type
+// badges, selected states) -- deliberately not the AI-cliché warm terracotta.
+val Seal = Color(0xFFA13E2B)
+val SealLight = Color(0xFFD68F7D)
+val SealContainer = Color(0xFFF3DCD5)
+val OnSealContainer = Color(0xFF4A150A)
 
-val OutlineLight = Color(0xFFDADCE0)
-val OutlineDark = Color(0xFF3C4043)
+// Paper: warm off-white / near-black surfaces instead of cold Material grey.
+val PaperLight = Color(0xFFFAF7F1)
+val PaperDark = Color(0xFF1B1A17)
+val PaperVariantLight = Color(0xFFF0EAE0)
+val PaperVariantDark = Color(0xFF2A2823)
 
-// File-type accent colors, mirroring the color-coding Drive uses for
-// PDFs, images, spreadsheets, etc. Used for document icons/thumоnail badges.
-val FileColorPdf = Color(0xFFEA4335)
-val FileColorImage = Color(0xFF34A853)
-val FileColorSpreadsheet = Color(0xFF0F9D58)
-val FileColorDoc = Color(0xFF4285F4)
-val FileColorArchive = Color(0xFF9AA0A6)
-val FileColorGeneric = Color(0xFF5F6368)
+val OnPaperLight = Color(0xFF1F1C16)
+val OnPaperDark = Color(0xFFEAE5DA)
+
+// Parchment: warm border/divider tone.
+val ParchmentLight = Color(0xFFDDD4C0)
+val ParchmentDark = Color(0xFF48443A)
+
+// File-type accent colors -- kept distinct from the brand palette since
+// they carry semantic meaning (file type), not brand identity.
+val FileColorPdf = Color(0xFFB23A2F)
+val FileColorImage = Color(0xFF3E7D5C)
+val FileColorSpreadsheet = Color(0xFF2E7D57)
+val FileColorDoc = Color(0xFF3958A5)
+val FileColorArchive = Color(0xFF8A8578)
+val FileColorGeneric = Color(0xFF6B6656)

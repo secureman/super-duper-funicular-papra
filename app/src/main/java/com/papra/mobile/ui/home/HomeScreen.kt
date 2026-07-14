@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -25,12 +26,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -153,47 +157,33 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            Column {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            text = state.activeOrganization?.name ?: "Papra",
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                    },
-                    actions = {
-                        OrgSwitcher(
-                            organizations = state.organizations,
-                            active = state.activeOrganization,
-                            onSelect = viewModel::switchOrganization,
-                        )
-                        IconButton(onClick = onOpenSearch) {
-                            Icon(Icons.Filled.Search, contentDescription = "Search")
-                        }
-                        IconButton(onClick = viewModel::toggleViewMode) {
-                            Icon(
-                                imageVector = if (state.viewMode == ViewMode.GRID) Icons.Filled.ViewList else Icons.Filled.GridView,
-                                contentDescription = "Toggle view",
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                    ),
-                )
-                if (state.foldersSupported) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-                    ) {
-                        TextButton(onClick = { viewModel.navigateToBreadcrumb(-1) }) { Text("Home") }
-                        state.breadcrumb.forEachIndexed { index, folder ->
-                            Icon(Icons.Filled.ChevronRight, contentDescription = null, modifier = Modifier.size(16.dp))
-                            TextButton(onClick = { viewModel.navigateToBreadcrumb(index) }) { Text(folder.name) }
-                        }
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = state.activeOrganization?.name ?: "Papra",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
+                actions = {
+                    OrgSwitcher(
+                        organizations = state.organizations,
+                        active = state.activeOrganization,
+                        onSelect = viewModel::switchOrganization,
+                    )
+                    IconButton(onClick = onOpenSearch) {
+                        Icon(Icons.Filled.Search, contentDescription = "Search")
                     }
-                }
-            }
+                    IconButton(onClick = viewModel::toggleViewMode) {
+                        Icon(
+                            imageVector = if (state.viewMode == ViewMode.GRID) Icons.Filled.ViewList else Icons.Filled.GridView,
+                            contentDescription = "Toggle view",
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
         },
         floatingActionButton = {
             Box {
@@ -224,21 +214,82 @@ fun HomeScreen(
             }
         },
     ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            if (state.foldersSupported && state.breadcrumb.isNotEmpty()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                ) {
+                    TextButton(onClick = { viewModel.navigateToBreadcrumb(-1) }) { Text("Home") }
+                    state.breadcrumb.forEachIndexed { index, folder ->
+                        Icon(Icons.Filled.ChevronRight, contentDescription = null, modifier = Modifier.size(16.dp))
+                        TextButton(onClick = { viewModel.navigateToBreadcrumb(index) }) { Text(folder.name) }
+                    }
+                }
+            }
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            androidx.compose.animation.Crossfade(targetState = Triple(state.isLoading, state.error, state.documents.isEmpty() && state.folders.isEmpty()), label = "home-content") { (isLoading, error, isEmpty) ->
             when {
-                state.isLoading && state.documents.isEmpty() && state.folders.isEmpty() -> {
+                isLoading && isEmpty -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
-                state.error != null && state.documents.isEmpty() && state.folders.isEmpty() -> {
-                    Text(
-                        text = state.error ?: "Something went wrong",
-                        modifier = Modifier.align(Alignment.Center).padding(24.dp),
-                        color = MaterialTheme.colorScheme.error,
-                    )
+                error != null && isEmpty -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center).padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.CloudOff,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(40.dp),
+                        )
+                        Spacer(Modifier.padding(top = 12.dp))
+                        Text(
+                            error ?: "Something went wrong",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+                    }
                 }
-                state.documents.isEmpty() && state.folders.isEmpty() -> {
-                    Column(modifier = Modifier.align(Alignment.Center)) {
-                        Text("Nothing here yet", style = MaterialTheme.typography.bodyLarge)
+                isEmpty -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center).padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Inventory2,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(32.dp),
+                            )
+                        }
+                        Spacer(Modifier.padding(top = 16.dp))
+                        Text(
+                            if (state.breadcrumb.isEmpty()) "No documents yet" else "This folder is empty",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Spacer(Modifier.padding(top = 4.dp))
+                        Text(
+                            "Upload a file or scan a document to get started.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+                        Spacer(Modifier.padding(top = 16.dp))
+                        Button(onClick = { filePickerLauncher.launch(arrayOf("*/*")) }) {
+                            Icon(Icons.Filled.CloudUpload, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.padding(start = 6.dp))
+                            Text("Upload a file")
+                        }
                     }
                 }
                 state.viewMode == ViewMode.GRID -> {
@@ -340,7 +391,9 @@ fun HomeScreen(
                     }
                 }
             }
+            }
         }
+    }
     }
 
     if (showNewFolderDialog) {

@@ -36,7 +36,22 @@ fun PapraNavGraph(app: PapraApp, navController: NavHostController = rememberNavC
         factory = ViewModelFactory { HomeViewModel(app.documentRepository, app.sessionStore) },
     )
 
-    NavHost(navController = navController, startDestination = Routes.SPLASH) {
+    NavHost(
+        navController = navController,
+        startDestination = Routes.SPLASH,
+        enterTransition = {
+            androidx.compose.animation.slideInHorizontally(initialOffsetX = { it / 4 }) + androidx.compose.animation.fadeIn()
+        },
+        exitTransition = {
+            androidx.compose.animation.fadeOut(targetAlpha = 0.4f)
+        },
+        popEnterTransition = {
+            androidx.compose.animation.fadeIn()
+        },
+        popExitTransition = {
+            androidx.compose.animation.slideOutHorizontally(targetOffsetX = { it / 4 }) + androidx.compose.animation.fadeOut()
+        },
+    ) {
         composable(Routes.SPLASH) {
             LaunchedEffect(Unit) {
                 val hasSession = app.sessionStore.currentAuthMode() != com.papra.mobile.data.local.AuthMode.NONE &&

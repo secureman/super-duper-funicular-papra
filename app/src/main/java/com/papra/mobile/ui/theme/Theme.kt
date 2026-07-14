@@ -1,54 +1,63 @@
 package com.papra.mobile.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 
 private val LightColors = lightColorScheme(
-    primary = PapraBlue,
-    onPrimary = SurfaceLight,
-    primaryContainer = PapraBlueContainer,
-    surface = SurfaceLight,
-    onSurface = OnSurfaceLight,
-    surfaceVariant = SurfaceVariantLight,
-    outline = OutlineLight,
+    primary = Ink,
+    onPrimary = PaperLight,
+    primaryContainer = InkContainer,
+    onPrimaryContainer = OnInkContainer,
+    secondary = InkLight,
+    tertiary = Seal,
+    onTertiary = PaperLight,
+    tertiaryContainer = SealContainer,
+    onTertiaryContainer = OnSealContainer,
+    surface = PaperLight,
+    onSurface = OnPaperLight,
+    surfaceVariant = PaperVariantLight,
+    onSurfaceVariant = OnPaperLight,
+    outline = ParchmentLight,
+    background = PaperLight,
+    onBackground = OnPaperLight,
 )
 
 private val DarkColors = darkColorScheme(
-    primary = PapraBlueDark,
-    onPrimary = SurfaceDark,
-    primaryContainer = PapraBlue,
-    surface = SurfaceDark,
-    onSurface = OnSurfaceDark,
-    surfaceVariant = SurfaceVariantDark,
-    outline = OutlineDark,
+    primary = InkLight,
+    onPrimary = PaperDark,
+    primaryContainer = Ink,
+    onPrimaryContainer = InkContainer,
+    secondary = InkLight,
+    tertiary = SealLight,
+    onTertiary = OnSealContainer,
+    tertiaryContainer = Seal,
+    onTertiaryContainer = SealContainer,
+    surface = PaperDark,
+    onSurface = OnPaperDark,
+    surfaceVariant = PaperVariantDark,
+    onSurfaceVariant = OnPaperDark,
+    outline = ParchmentDark,
+    background = PaperDark,
+    onBackground = OnPaperDark,
 )
 
 /**
- * Drive leans on Material You dynamic color on Android 12+, falling back to
- * its own brand palette otherwise. We mirror that: dynamic color when
- * available, PapraBlue palette as the fallback/branding.
+ * Dynamic color (Material You) is deliberately OFF by default. On most
+ * Android 12+ devices it derives a muted palette from the wallpaper, which
+ * silently overrides any deliberate brand palette and is a common reason an
+ * app ends up looking generic/flat regardless of what colors are defined
+ * here. Papra has its own intentional ink/paper/seal identity instead.
  */
 @Composable
 fun PapraTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val context = LocalContext.current
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        darkTheme -> DarkColors
-        else -> LightColors
-    }
+    val colorScheme = if (darkTheme) DarkColors else LightColors
 
     MaterialTheme(
         colorScheme = colorScheme,
